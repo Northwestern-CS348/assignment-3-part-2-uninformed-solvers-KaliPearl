@@ -19,7 +19,41 @@ class SolverDFS(UninformedSolver):
             True if the desired solution state is reached, False otherwise
         """
         ### Student code goes here
-        return True
+        # get current . check visited . find moveables and put into children, if hasn't been visited
+        # check children for next unvisited, return false and set current to child
+
+        current = self.currentState
+        if current.state == self.victoryCondition:
+            return True
+        depth = current.depth
+        self.visited[current] = True
+        children = current.children
+        if len(children) == 0:
+            moves = self.gm.getMovables()
+            if moves:
+                for x in moves:
+                    self.gm.makeMove(x)
+                    self.currentState.children.append(GameState(self.gm.getGameState(), depth + 1, current.state)) # current.state isn't a movable RIP
+                    self.gm.reverseMove(x) # either makemove or reverse move doesn't work properly as it doesn't remove the old movable statements
+            if not moves:
+                self.gm.reverseMove(current.state) # this isnt a movable obkect
+                # self.currentState =
+                return False
+        if current.nextChildToVisit == -1:
+            self.gm.reverseMove(current.requiredMovable)
+            self.gm.currentState = self.currentState.parent
+
+        if current.nextChildToVisit != -1:
+            nextnode = current.nextChildToVisit
+            self.currentState.nextChildToVisit += 1
+
+            if current.nextChildToVisit >= len(children):
+                current.nextChildToVisit = -1
+            self.currentState = current.children[nextnode]
+            self.currentState.parent = current
+            return False
+
+
 
 
 class SolverBFS(UninformedSolver):
