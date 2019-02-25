@@ -19,39 +19,34 @@ class SolverDFS(UninformedSolver):
             True if the desired solution state is reached, False otherwise
         """
         ### Student code goes here
-        # get current . check visited . find moveables and put into children, if hasn't been visited
-        # check children for next unvisited, return false and set current to child
+        # check victory statement
+        # set visited
+        # create children if don't exist
 
-        current = self.currentState
-        if current.state == self.victoryCondition:
+        if self.currentState.state == self.victoryCondition:
             return True
-        depth = current.depth
-        self.visited[current] = True
-        children = current.children
-        if len(children) == 0:
+        self.visited[self.currentState] = True
+        if len(self.currentState.children) == 0:
             moves = self.gm.getMovables()
-            if moves:
-                for x in moves:
-                    self.gm.makeMove(x)
-                    self.currentState.children.append(GameState(self.gm.getGameState(), depth + 1, current.state)) # current.state isn't a movable RIP
-                    self.gm.reverseMove(x) # either makemove or reverse move doesn't work properly as it doesn't remove the old movable statements
-            if not moves:
-                self.gm.reverseMove(current.state) # this isnt a movable obkect
-                # self.currentState =
+            for child in moves:
+                if self.gm.isMovableLegal(child):
+                    self.gm.makeMove(child)
+                    self.currentState.children.append(GameState(self.gm.getGameState(), self.currentState.depth + 1, child))
+                    self.gm.reverseMove(child)
+        for child in self.currentState.children:
+            child.parent = self.currentState
+            try:
+                if self.visited[child] == True:
+                    pass
+            except KeyError:
+                self.gm.makeMove(child.requiredMovable)
+                self.currentState = child
                 return False
-        if current.nextChildToVisit == -1:
-            self.gm.reverseMove(current.requiredMovable)
-            self.gm.currentState = self.currentState.parent
-
-        if current.nextChildToVisit != -1:
-            nextnode = current.nextChildToVisit
-            self.currentState.nextChildToVisit += 1
-
-            if current.nextChildToVisit >= len(children):
-                current.nextChildToVisit = -1
-            self.currentState = current.children[nextnode]
-            self.currentState.parent = current
-            return False
+        if isinstance(self.currentState.parent, GameState):
+            self.gm.reverseMove(self.currentState.requiredMovable)
+            self.currentState = self.currentState.parent
+            return self.solveOneStep()
+        return True
 
 
 
@@ -59,6 +54,7 @@ class SolverDFS(UninformedSolver):
 class SolverBFS(UninformedSolver):
     def __init__(self, gameMaster, victoryCondition):
         super().__init__(gameMaster, victoryCondition)
+        self.queue = []
 
     def solveOneStep(self):
         """
@@ -74,4 +70,46 @@ class SolverBFS(UninformedSolver):
             True if the desired solution state is reached, False otherwise
         """
         ### Student code goes here
+        if self.currentState.state == self.victoryCondition:
+            return True
+        curr = self.currentState
+        self.visited[self.currentState] = True
+        if len(self.currentState.children) == 0:
+            moves = self.gm.getMovables()
+            for child in moves:
+                if self.gm.isMovableLegal(child):
+                    self.gm.makeMove(child)
+                    self.currentState = GameState(self.gm.getGameState(), self.currentState.depth + 1, child)
+                    self.currentState.parent = curr
+                    self.currentState.parent.children.append(self.currentState)
+                    self.queue.append(self.currentState)
+                    self.gm.reverseMove(child)
+                    self.currentState = self.currentState.parent
+        undo = []
+        while isinstance(curr.parent, GameState):
+            undo.append(curr.requiredMovable)
+            curr = curr.parent
+        for x in undo:
+            self.gm.reverseMove(x)
+
+        while self.queue:
+            front = self.queue.pop(0)
+            self.currentState = front
+            try:
+                self.visited[front]
+            except KeyError:
+                make = []
+                undo = []
+                while isinstance(front.parent, GameState):
+                    make.insert(0, front.requiredMovable)
+                    undo.append(front.requiredMovable)
+                    front = front.parent
+
+                for x in make:
+                    self.gm.makeMove(x)
+
+                return False
         return True
+
+
+

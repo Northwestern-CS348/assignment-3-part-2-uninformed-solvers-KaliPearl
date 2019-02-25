@@ -68,9 +68,9 @@ class TowerOfHanoiGame(GameMaster):
         ### Student code goes here
         if movable_statement.predicate != "movable":
             return
-        disk = str(movable_statement.terms[0])
-        startpeg = str(movable_statement.terms[1])
-        endpeg = str(movable_statement.terms[2])
+        disk = "disk" + str(movable_statement.terms[0])[-1]
+        startpeg = "peg" + str(movable_statement.terms[1])[-1]
+        endpeg = "peg" + str(movable_statement.terms[2])[-1]
 
         self.kb.kb_retract(parse_input('fact: (on ' + disk + ' ' + startpeg + ')'))
         self.kb.kb_retract(parse_input('fact: (top ' + disk + ' ' + startpeg + ')'))
@@ -82,7 +82,7 @@ class TowerOfHanoiGame(GameMaster):
             for x in on:
                 lst += x.bindings[0].constant.element[-1]
             lst.sort(key=lambda x: int(x))
-            self.kb.kb_assert(parse_input('fact: (top ' + lst[0] + ' ' + startpeg + ')'))
+            self.kb.kb_assert(parse_input('fact: (top ' + "disk" + lst[0] + ' ' + startpeg + ')'))
         empty = self.kb.kb_ask(parse_input('fact: (empty ?X)'))
         if empty:
             for x in empty:
@@ -92,7 +92,7 @@ class TowerOfHanoiGame(GameMaster):
         top = self.kb.kb_ask(parse_input('fact: (top ?X ' + endpeg + ')'))
         if top:
             for x in top:
-                self.kb.kb_retract(parse_input('fact: (top ' + x.bindings[0].constant.element + ' ' + endpeg + ')'))
+                self.kb.kb_retract(parse_input('fact: (top ' + "disk" + x.bindings[0].constant.element[-1] + ' ' + endpeg + ')'))
         self.kb.kb_assert(parse_input('fact: (on ' + disk + ' ' + endpeg + ')'))
         self.kb.kb_assert(parse_input('fact: (top ' + disk + ' ' + endpeg + ')'))
 
